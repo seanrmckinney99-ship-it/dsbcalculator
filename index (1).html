@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DSB Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#E9EDF2;
+    --card:#FFFFFF;
+    --ink:#152031;
+    --muted:#5E7187;
+    --faint:#8A9AAC;
+    --line:#D5DCE5;
+    --line-soft:#E7ECF1;
+    --accent:#1E5FA8;
+    --accent-soft:#E8F0F8;
+    --pos:#E0A23C;
+    --neg:#F08A7E;
+    --field:#1F7A4D;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.5;
+    padding:32px 18px 64px;
+    display:flex;
+    justify-content:center;
+  }
+  .sheet{width:100%;max-width:760px;}
+
+  /* ---------- header ---------- */
+  .head{margin-bottom:26px;}
+  .eyebrow{
+    font-family:'Archivo',sans-serif;
+    font-weight:700;
+    font-size:11px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--accent);
+    display:flex;align-items:center;gap:10px;
+  }
+  .eyebrow::after{content:"";flex:1;height:1px;background:var(--line);}
+  .title{
+    font-family:'Archivo',sans-serif;
+    font-weight:800;
+    font-size:clamp(30px,6vw,46px);
+    letter-spacing:-.02em;
+    line-height:1.02;
+    margin:10px 0 6px;
+  }
+  .sub{color:var(--muted);font-size:14.5px;max-width:48ch;}
+
+  /* ---------- panels ---------- */
+  .panel{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:22px 22px 24px;
+    margin-top:20px;
+  }
+  .panel-label{
+    font-family:'Archivo',sans-serif;
+    font-weight:700;
+    font-size:12px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:18px;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .clear{
+    font-family:'Inter',sans-serif;
+    font-weight:500;
+    font-size:12px;
+    letter-spacing:0;
+    text-transform:none;
+    color:var(--accent);
+    background:none;border:none;cursor:pointer;
+    padding:4px 6px;border-radius:6px;
+  }
+  .clear:hover{background:var(--accent-soft);}
+  .clear:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+
+  /* ---------- input grid ---------- */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px;}
+  @media(max-width:540px){.grid{grid-template-columns:1fr;}}
+  .field label{
+    display:block;
+    font-size:13px;
+    font-weight:500;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  .field .unit{color:var(--faint);font-weight:400;}
+  .field input{
+    width:100%;
+    font-family:'JetBrains Mono',monospace;
+    font-size:18px;
+    font-weight:500;
+    color:var(--ink);
+    background:#FBFCFD;
+    border:1px solid var(--line);
+    border-radius:9px;
+    padding:11px 13px;
+    transition:border-color .12s, box-shadow .12s;
+  }
+  .field input::placeholder{color:#C2CCD7;}
+  .field input:focus{
+    outline:none;
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-soft);
+  }
+
+  /* ---------- cascade ---------- */
+  .cascade{margin-top:6px;}
+  .step{
+    display:grid;
+    grid-template-columns:30px 1fr auto;
+    align-items:center;
+    gap:0 16px;
+    position:relative;
+    padding:13px 0;
+  }
+  .step + .step{border-top:1px solid var(--line-soft);}
+  .num{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:13px;
+    color:var(--accent);
+    width:26px;height:26px;
+    display:flex;align-items:center;justify-content:center;
+    border:1.5px solid var(--line);
+    border-radius:7px;
+    background:#fff;
+  }
+  .step-body .name{
+    font-family:'Archivo',sans-serif;
+    font-weight:600;
+    font-size:15px;
+    color:var(--ink);
+  }
+  .step-body .formula{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--faint);
+    margin-top:2px;
+  }
+  .val{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:20px;
+    color:var(--ink);
+    text-align:right;
+    white-space:nowrap;
+  }
+  .val .vunit{font-size:11px;font-weight:400;color:var(--faint);margin-left:5px;}
+  .val.empty{color:#C2CCD7;}
+
+  /* ---------- earn payoff ---------- */
+  .earn{
+    margin-top:22px;
+    background:var(--ink);
+    border-radius:14px;
+    padding:26px 26px;
+    display:flex;align-items:center;justify-content:space-between;
+    flex-wrap:wrap;gap:14px;
+    position:relative;overflow:hidden;
+  }
+  .earn::before{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(120% 140% at 100% 0%, rgba(224,162,60,.14), transparent 55%);
+    pointer-events:none;
+  }
+  .earn-left{position:relative;}
+  .earn-tag{
+    font-family:'Archivo',sans-serif;
+    font-weight:700;font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    color:#8FA2B6;
+  }
+  .earn-formula{
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#6E869C;margin-top:6px;
+  }
+  .earn-right{position:relative;text-align:right;}
+  .earn-num{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:clamp(38px,9vw,58px);
+    line-height:1;
+    color:var(--pos);
+    letter-spacing:-.01em;
+  }
+  .earn-num.neg{color:var(--neg);}
+  .earn-num.empty{color:#3D4C5E;}
+  .earn-units{
+    font-family:'Inter',sans-serif;font-size:13px;color:#9DB0C2;margin-top:7px;
+  }
+  .earn-units strong{color:#CBD8E4;font-weight:600;}
+
+  .note{
+    font-size:12.5px;color:var(--muted);
+    margin-top:16px;padding-left:2px;
+    display:flex;gap:8px;align-items:flex-start;
+  }
+  .note svg{flex-shrink:0;margin-top:2px;}
+</style>
+</head>
+<body>
+<main class="sheet">
+  <header class="head">
+    <div class="eyebrow">Inventory Allocation</div>
+    <h1 class="title">DSB Calculator</h1>
+    <p class="sub">Enter the six base figures. The calculation flows down through each formula to the dealer's earn — the units needed to reach the target days' supply.</p>
+  </header>
+
+  <!-- INPUTS -->
+  <section class="panel">
+    <div class="panel-label">
+      <span>Inputs</span>
+      <button class="clear" id="clear" type="button">Clear all</button>
+    </div>
+    <div class="grid">
+      <div class="field">
+        <label for="retail">Retail Sales <span class="unit">· units</span></label>
+        <input id="retail" type="number" inputmode="decimal" placeholder="0" value="135">
+      </div>
+      <div class="field">
+        <label for="days">Days in Wheelbase <span class="unit">· days</span></label>
+        <input id="days" type="number" inputmode="decimal" placeholder="0" value="90">
+      </div>
+      <div class="field">
+        <label for="tt">Transit Time (TT) <span class="unit">· days</span></label>
+        <input id="tt" type="number" inputmode="decimal" placeholder="0" value="12">
+      </div>
+      <div class="field">
+        <label for="avail">Total Availability <span class="unit">· units</span></label>
+        <input id="avail" type="number" inputmode="decimal" placeholder="0" value="140">
+      </div>
+      <div class="field">
+        <label for="pipe">Pipeline Protected <span class="unit">· units</span></label>
+        <input id="pipe" type="number" inputmode="decimal" placeholder="0" value="20">
+      </div>
+      <div class="field">
+        <label for="gst">GST Target Days' Supply <span class="unit">· days</span></label>
+        <input id="gst" type="number" inputmode="decimal" placeholder="0" value="90">
+      </div>
+    </div>
+  </section>
+
+  <!-- CALCULATION -->
+  <section class="panel">
+    <div class="panel-label"><span>Calculation</span></div>
+    <div class="cascade">
+      <div class="step">
+        <div class="num">1</div>
+        <div class="step-body">
+          <div class="name">Daily Selling Rate · DSR</div>
+          <div class="formula">Retail Sales &divide; Days in Wheelbase</div>
+        </div>
+        <div class="val empty" id="o-dsr">—<span class="vunit">u/day</span></div>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <div class="step-body">
+          <div class="name">Transit Allowance · TA</div>
+          <div class="formula">Transit Time &times; DSR</div>
+        </div>
+        <div class="val empty" id="o-ta">—<span class="vunit">units</span></div>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <div class="step-body">
+          <div class="name">Adjusted Availability · DAA</div>
+          <div class="formula">Total Avail &minus; Pipeline Protected &minus; TA</div>
+        </div>
+        <div class="val empty" id="o-daa">—<span class="vunit">units</span></div>
+      </div>
+      <div class="step">
+        <div class="num">4</div>
+        <div class="step-body">
+          <div class="name">Dealer's Days' Supply</div>
+          <div class="formula">DAA &divide; DSR</div>
+        </div>
+        <div class="val empty" id="o-dds">—<span class="vunit">days</span></div>
+      </div>
+      <div class="step">
+        <div class="num">5</div>
+        <div class="step-body">
+          <div class="name">Days' Supply to Balance · DSB</div>
+          <div class="formula">GST Target &minus; Dealer's Days' Supply</div>
+        </div>
+        <div class="val empty" id="o-dsb">—<span class="vunit">days</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EARN -->
+  <section class="earn">
+    <div class="earn-left">
+      <div class="earn-tag">Dealer's Earn</div>
+      <div class="earn-formula">DSB &times; DSR</div>
+    </div>
+    <div class="earn-right">
+      <div class="earn-num empty" id="o-earn">—</div>
+      <div class="earn-units" id="o-earn-units">enter inputs to calculate</div>
+    </div>
+  </section>
+
+  <p class="note">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8A9AAC" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M12 11v5"/></svg>
+    <span>A positive earn is the number of units the dealer can take on to reach target. A negative earn means the dealer is over target by that many units.</span>
+  </p>
+</main>
+
+<script>
+  const ids = ['retail','days','tt','avail','pipe','gst'];
+  const inputs = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
+
+  const out = {
+    dsr: document.getElementById('o-dsr'),
+    ta:  document.getElementById('o-ta'),
+    daa: document.getElementById('o-daa'),
+    dds: document.getElementById('o-dds'),
+    dsb: document.getElementById('o-dsb'),
+    earn: document.getElementById('o-earn'),
+    earnUnits: document.getElementById('o-earn-units'),
+  };
+
+  const num = (v, unit) => {
+    const sign = v < 0 ? '\u2212' : '';
+    return sign + Math.abs(v).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:2})
+      + (unit ? `<span class="vunit">${unit}</span>` : '');
+  };
+
+  function setCell(el, value, unit){
+    if(value === null || !isFinite(value)){
+      el.classList.add('empty');
+      el.innerHTML = '—' + (unit ? `<span class="vunit">${unit}</span>` : '');
+    } else {
+      el.classList.remove('empty');
+      el.innerHTML = num(value, unit);
+    }
+  }
+
+  function readVal(id){
+    const raw = inputs[id].value.trim();
+    if(raw === '') return null;
+    const n = parseFloat(raw);
+    return isNaN(n) ? null : n;
+  }
+
+  function calc(){
+    const retail = readVal('retail');
+    const days   = readVal('days');
+    const tt     = readVal('tt');
+    const avail  = readVal('avail');
+    const pipe   = readVal('pipe');
+    const gst    = readVal('gst');
+
+    // 1. DSR = Retail / Days
+    const dsr = (retail !== null && days) ? retail / days : null;
+    setCell(out.dsr, dsr, 'u/day');
+
+    // 2. TA = TT × DSR
+    const ta = (tt !== null && dsr !== null) ? tt * dsr : null;
+    setCell(out.ta, ta, 'units');
+
+    // 3. DAA = Total Avail − Pipeline − TA
+    const daa = (avail !== null && pipe !== null && ta !== null) ? avail - pipe - ta : null;
+    setCell(out.daa, daa, 'units');
+
+    // 4. Dealer Days Supply = DAA / DSR
+    const dds = (daa !== null && dsr) ? daa / dsr : null;
+    setCell(out.dds, dds, 'days');
+
+    // 5. DSB = GST − Dealer Days Supply
+    const dsb = (gst !== null && dds !== null) ? gst - dds : null;
+    setCell(out.dsb, dsb, 'days');
+
+    // 6. EARN = DSB × DSR
+    const earn = (dsb !== null && dsr !== null) ? dsb * dsr : null;
+
+    if(earn === null || !isFinite(earn)){
+      out.earn.className = 'earn-num empty';
+      out.earn.textContent = '—';
+      out.earnUnits.innerHTML = 'enter inputs to calculate';
+    } else {
+      const rounded = Math.round(earn);
+      const isNeg = earn < 0;
+      out.earn.className = 'earn-num' + (isNeg ? ' neg' : '');
+      out.earn.textContent = (isNeg ? '\u2212' : '') +
+        Math.abs(earn).toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1});
+      const word = isNeg ? 'over target' : 'to earn';
+      out.earnUnits.innerHTML =
+        `&asymp; <strong>${Math.abs(rounded).toLocaleString()} units</strong> ${word}`;
+    }
+  }
+
+  ids.forEach(id => inputs[id].addEventListener('input', calc));
+  document.getElementById('clear').addEventListener('click', () => {
+    ids.forEach(id => inputs[id].value = '');
+    inputs.retail.focus();
+    calc();
+  });
+
+  calc();
+</script>
+</body>
+</html>
